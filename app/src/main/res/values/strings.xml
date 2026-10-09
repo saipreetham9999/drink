@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Drink</string>
+    <string name="welcome_title">Welcome to Drink</string>
+    <string name="welcome_description">Your daily hydration companion.</string>
 </resources>

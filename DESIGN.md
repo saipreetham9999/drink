@@ -74,7 +74,13 @@ Inspection on 2026-10-08 found:
 - No application Activity or launcher entry exists in the inspected source/manifest.
 - local.properties points to the local Android SDK and must remain untracked.
 
-These are configuration observations, not successful build or compatibility verification. No build or device launch has been executed in this session.
+These describe the original skeleton. Phase 1 now adds MainActivity and its launcher entry, enables Compose, and uses Material 3 for a welcome screen with system light/dark appearance and safe drawing insets. The XML host theme uses NoActionBar so Compose owns the screen.
+
+The Compose compiler plugin is pinned to 2.2.10 to match AGP 9.0.1's built-in Kotlin tooling; no separate Kotlin Android plugin is added. Compose BOM 2025.08.00 and Activity Compose 1.10.1 provide the starter UI dependencies. Existing template dependencies remain in place.
+
+`gradlew.bat --version` ran successfully using Android Studio's bundled Java 21.0.9 and reported Gradle 9.2.1. Its reported Kotlin 2.2.20 is Gradle's embedded Kotlin, distinct from the app compiler. SDK platform android-36.1 is installed and emulator Medium_Phone_API_36.1 is available. The product owner will launch and test the app through Android Studio. Device launch has not been verified.
+
+Compatibility references: [AGP 9.0 release notes](https://developer.android.com/build/releases/agp-9-0-0-release-notes), [Compose compiler migration](https://kotlinlang.org/docs/compose-compiler-migration-guide.html), [Compose BOM mapping](https://developer.android.com/develop/ui/compose/bom/bom-mapping), and [Activity releases](https://developer.android.com/jetpack/androidx/releases/activity).
 
 ## Open decisions
 

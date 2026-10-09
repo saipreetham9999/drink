@@ -1,8 +1,8 @@
-# Drink — Implementation Tasks
+shall we start# Drink — Implementation Tasks
 
 ## Current scope
 
-Planning and project documentation are underway. Phase 1 is the next implementation phase and is not complete. Do not implement Phase 2 or later features yet.
+Phase 1 is underway. The Compose starter screen and launcher configuration are implemented. The product owner will run the emulator using Android Studio buttons and verify the screen manually. Do not implement Phase 2 or later features yet.
 
 ## Phase 0 — Environment and instructions
 
@@ -15,7 +15,7 @@ Planning and project documentation are underway. Phase 1 is the next implementat
 
 - [x] Inspect project structure and declared Gradle/SDK configuration.
 - [ ] Verify effective Kotlin tooling, Gradle JVM, installed SDK, and library compatibility.
-- [ ] Configure Compose and create a minimal launchable starter Activity.
+- [x] Configure Compose and create a minimal launchable starter Activity.
 - [ ] Build debug application and resolve configuration errors.
 - [ ] Run on an emulator or physical Android device.
 - [ ] Verify the initial screen launches without crashing.
@@ -74,4 +74,6 @@ Acceptance: some deliberate drinking-like gestures produce candidates, false pos
 
 2026-10-08: inspected repository files, configuration, and Git status. Documentation and ignore rules added. Gradle build, tests, emulator launch, and physical-device launch have not been executed. Phase 1 remains incomplete.
 
-Next task: settle remaining product ideas, then complete Phase 1 only.
+2026-10-08: product owner ran the app through Android Studio on Medium Phone API 36.1. MainActivity started and process 16633 connected, but the owner reported a blank screen. Read-only `adb logcat -d --pid=16633 --format brief` inspection found no fatal exception in the available log, a roughly 6.9-second first frame, skipped frames, and emulator EGL configuration warnings. These do not establish the cause. Screen acceptance remains unverified; manual testing stays with the product owner.
+
+Next task: manually cold boot the emulator and rerun the app; if the screen remains blank, collect a screenshot and fresh Logcat output to diagnose rendering. Phase 1 remains incomplete.
