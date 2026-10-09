@@ -39,5 +39,6 @@ Read this file, DESIGN.md, and TASKS.md before starting work. Inspect existing c
 - Run checks appropriate to the change; never claim a build, test, or device check passed unless executed successfully.
 - Document build configuration and material limitations.
 - Update TASKS.md with verified progress; distinguish planned, completed, and blocked work.
+- Update TEST_SCENARIOS.md whenever feature behavior changes. Keep final functional scenarios editable and distinguish planned scenarios from executed checks.
 - Report changes, affected files, commands executed, results, remaining issues, and the recommended next task.
 - Do not commit, publish, or deploy unless requested.

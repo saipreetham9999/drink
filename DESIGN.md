@@ -18,11 +18,23 @@ The product name is Drink, replacing Water in the original handoff. The initial 
 
 ### Manual hydration
 
-Users can set a daily target in milliliters, configure a typical glass amount, record water intake, view today's progress and previous days, and correct or delete entries. Daily totals must handle local day boundaries correctly.
+Approved sleep-first revision: first collect usual sleep/wake times locally. Then ask for a daily target and number of drinking attempts, applying the plan to today or seven consecutive local dates starting today. Before the first recorded drink, the day's plan can be revised; any recorded intake locks that day's goal/attempt count. A weekly template supplies later days automatically, expiring after its seventh date. History stays read-only, with no separate settings screen.
+
+For 2,000 mL and 10 attempts, Record attempt adds 200 mL. Whole-mL remainders are distributed across attempts so the completed plan adds exactly the target. Attempts are limited to 1–32, at least 1 mL each, with at least 15 minutes between calculated reminder slots. Slots are evenly spaced inside the day's waking periods, excluding sleep (including daytime sleep); missed slots are skipped without a catch-up burst. Notifications only suggest the next attempt's amount; intake requires explicit recording. A small Add extra water action preserves the approved ability to record extra intake without changing the locked goal or planned attempt count.
+
+Phase 3 history lists only previous dates with recorded intake, newest first. Tapping a date shows total mL, that day's goal/completion percentage, and timed entries. A day keeps its last configured goal; later days' goal edits cannot change it. Completion may exceed 100% when extra water is added. New entries keep their local recording date so travel cannot move them to another history day. Existing Phase 2 entries migrate using the current timezone; their past goals were not recorded, so history displays an unavailable goal instead of estimating one.
+
+The earlier Phase 2 custom-amount Home has been superseded by the approved attempt plan. Defaults of 2,000 mL and ten attempts are editable user choices, not medical recommendations.
+
+The MVP uses Android's built-in SQLite through SQLiteOpenHelper, avoiding new dependencies. Schema version 3 stores intake timestamps, amounts, local recording dates, an attempt flag, daily goal/plan snapshots, and a dated one-day/seven-day template in the app's private database. Database operations run on a single background executor. Intake belongs to its local recording date; Home uses the current local date. Entry times display in the phone's current timezone. Home refreshes on resume and every 30 seconds while visible. Previous events are retained for history; uninstalling clears local data. Android cloud backup is disabled and the database is excluded from cloud backup and device transfer rules.
 
 ### Reminders
 
 Configurable local notifications work offline, can be disabled, respect quiet hours including overnight ranges, and avoid excessive notifications. Choose scheduling APIs according to required precision and Android restrictions when this phase begins.
+
+The sleep-first revision replaces manual interval/quiet-hour settings with calculated slots from the daily plan and sleeping hours. Plan setup requests notification permission only after saving the plan; denial leaves manual recording useful. Reminders can be toggled on/off from Home. Sleep times can be corrected separately; this reschedules reminders without changing locked intake plans. Scheduling still uses one inexact AlarmManager alarm at a time, with no exact-alarm permission or new dependencies. Android may delay delivery; sleep is rechecked at delivery, and no reminder is posted for an expired or completed plan. Future-only slots are used after late setup/resume. Reboot/update/time changes reconcile the schedule; force-stop requires reopening.
+
+Reminder configuration is stored locally, separately from hydration records. Dedicated reminder model/domain/data/scheduling/notification/presentation packages and `ui/reminders` separate each responsibility. Turning reminders off cancels the alarm and displayed reminder. A single notification is reused; tapping it opens Drink, with no automatic intake recording.
 
 ### Optional drinking detection
 
@@ -52,11 +64,13 @@ Proposed components, added only as needed:
 
 Keep presentation, hydration rules, local persistence, reminders, and detection separate. Detection emits candidates; a separate domain component decides whether intake is recorded. Introduce structure only when features require it.
 
+Existing hydration code is organized into `hydration/model` (record and screen data), `hydration/domain/HydrationRules` (validation/calculations), `hydration/data/HydrationStore` (SQLite), and `hydration/presentation/HydrationController` (named actions, navigation state, background loading). Screens live in `ui/home` and `ui/history`; `ui/DrinkApp` connects them to actions. `MainActivity` hosts lifecycle/navigation restoration and platform notification permission requests. Tests mirror the domain/data packages. Phase 4 reminders use their own packages and controller.
+
 ## Screen direction
 
 - Home: Drink name, today's intake, goal, progress, Add Water, reminder status, and history/settings entry points.
-- History: daily totals, individual entries, correction and deletion.
-- Settings: goal, serving size, reminder interval, quiet hours, notification controls, and future detection controls.
+- History: previous dates, read-only daily totals, completion percentage, and individual entries.
+- Goal changes and additional water remain on Home; no separate settings screen in Phase 3.
 - Camera (later): preview, start/stop, status, and candidate events with useful uncertainty information.
 
 Build screens incrementally. Phase 1 needs only a launchable starter screen.
@@ -76,7 +90,7 @@ Inspection on 2026-10-08 found:
 
 These describe the original skeleton. Phase 1 now adds MainActivity and its launcher entry, enables Compose, and uses Material 3 for a welcome screen with system light/dark appearance and safe drawing insets. The XML host theme uses NoActionBar so Compose owns the screen.
 
-The Compose compiler plugin is pinned to 2.2.10 to match AGP 9.0.1's built-in Kotlin tooling; no separate Kotlin Android plugin is added. Compose BOM 2025.08.00 and Activity Compose 1.10.1 provide the starter UI dependencies. Existing template dependencies remain in place.
+The Compose compiler plugin is pinned to 2.2.10 to match AGP 9.0.1's built-in Kotlin tooling; no separate Kotlin Android plugin is added. Compose BOM 2025.08.00 and Activity Compose 1.10.1 provide the starter UI dependencies. AppCompat and Material Views template dependencies have been removed; Core KTX and test dependencies remain.
 
 `gradlew.bat --version` ran successfully using Android Studio's bundled Java 21.0.9 and reported Gradle 9.2.1. Its reported Kotlin 2.2.20 is Gradle's embedded Kotlin, distinct from the app compiler. SDK platform android-36.1 is installed and emulator Medium_Phone_API_36.1 is available. The product owner will launch and test the app through Android Studio. Device launch has not been verified.
 
@@ -88,4 +102,7 @@ Compatibility references: [AGP 9.0 release notes](https://developer.android.com/
 - Initial goal and serving-size defaults; goals remain user-configurable.
 - UI style details and target test device.
 - Reminder precision and handling of timezone changes.
-- Backup/export behavior: the current manifest enables Android backup; review this against the privacy requirements before local hydration persistence is introduced.
+- Export behavior: no export is implemented in Phase 2. App database backup and transfer are excluded to keep intake on-device.
+
+Migration preserves old entries as extra/manual records. If today already has legacy records, its existing goal stays locked in a compatibility plan of ten attempts (limited by target mL), expiring today. Sleep setup is still required; old interval preferences never opt the user into the revised schedule.
+
