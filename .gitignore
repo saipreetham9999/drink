@@ -1,0 +1,29 @@
+# Local IDE settings
+.idea/
+*.iml
+
+# Gradle and generated Android output
+.gradle/
+.kotlin/
+**/build/
+.externalNativeBuild/
+.cxx/
+/captures/
+*.apk
+*.aab
+*.ap_
+*.hprof
+
+# Machine-specific SDK paths and signing secrets
+local.properties
+keystore.properties
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini
