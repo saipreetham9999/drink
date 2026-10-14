@@ -1,10 +1,11 @@
-package com.drink.app.ui.reminders
+ï»¿package com.drink.app.ui.reminders
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.drink.app.reminders.model.ReminderConfig
-import com.drink.app.ui.home.SleepSetup
+import com.drink.app.ui.setup.SleepSetup
+import com.drink.app.ui.setup.displayTime
 
 @Composable
 fun ReminderControls(config: ReminderConfig, busy: Boolean, error: Boolean, allowed: Boolean,
@@ -12,7 +13,7 @@ fun ReminderControls(config: ReminderConfig, busy: Boolean, error: Boolean, allo
     var editing by rememberSaveable { mutableStateOf(false) }
     if (editing) SleepSetup(config, busy, error, { onSave(it); editing = false }, { editing = false })
     else {
-        Text("Sleep ${config.sleepTime} · Wake ${config.wakeTime}")
+        Text("Sleep ${displayTime(config.sleepTime)} - Wake ${displayTime(config.wakeTime)}")
         OutlinedButton(onClick = { onSave(config.copy(enabled = !config.enabled)) }, enabled = !busy) {
             Text(if (config.enabled) "Turn reminders off" else "Turn reminders on")
         }
@@ -23,3 +24,5 @@ fun ReminderControls(config: ReminderConfig, busy: Boolean, error: Boolean, allo
             TextButton(onClick = onRetry, enabled = !busy) { Text("Retry") } }
     }
 }
+
+

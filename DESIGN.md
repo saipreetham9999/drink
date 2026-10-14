@@ -18,7 +18,7 @@ The product name is Drink, replacing Water in the original handoff. The initial 
 
 ### Manual hydration
 
-Approved sleep-first revision: first collect usual sleep/wake times locally. Then ask for a daily target and number of drinking attempts, applying the plan to today or seven consecutive local dates starting today. Before the first recorded drink, the day's plan can be revised; any recorded intake locks that day's goal/attempt count. A weekly template supplies later days automatically, expiring after its seventh date. History stays read-only, with no separate settings screen.
+Approved setup UI: one white screen asks for daily target and attempts first, followed by editable sleep/wake times with AM/PM and a calculated reminder preview. Apply the plan to today or seven consecutive local dates starting today. Before the first recorded drink, the day's plan can be revised; any recorded intake locks that day's goal/attempt count. A weekly template supplies later days automatically, expiring after its seventh date. History stays read-only, with no separate settings screen.
 
 For 2,000 mL and 10 attempts, Record attempt adds 200 mL. Whole-mL remainders are distributed across attempts so the completed plan adds exactly the target. Attempts are limited to 1–32, at least 1 mL each, with at least 15 minutes between calculated reminder slots. Slots are evenly spaced inside the day's waking periods, excluding sleep (including daytime sleep); missed slots are skipped without a catch-up burst. Notifications only suggest the next attempt's amount; intake requires explicit recording. A small Add extra water action preserves the approved ability to record extra intake without changing the locked goal or planned attempt count.
 
@@ -105,4 +105,7 @@ Compatibility references: [AGP 9.0 release notes](https://developer.android.com/
 - Export behavior: no export is implemented in Phase 2. App database backup and transfer are excluded to keep intake on-device.
 
 Migration preserves old entries as extra/manual records. If today already has legacy records, its existing goal stays locked in a compatibility plan of ten attempts (limited by target mL), expiring today. Sleep setup is still required; old interval preferences never opt the user into the revised schedule.
+
+
+Approved setup UI revision: one white screen with black text; goal first, attempts beside live mL-per-attempt, today/7-day choice, typed sleep/wake numbers with explicit AM/PM controls (no clock picker), and live reminder-time/amount list before Start plan. Passed slots are labelled. Setup drafts stay unsaved until Start; reminder hours save successfully before plan save and permission request. History enhancements are deferred; existing history and records are preserved.
 

@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.SystemBarStyle
 import com.drink.app.hydration.data.HydrationStore
 import com.drink.app.hydration.presentation.HydrationController
 import com.drink.app.ui.DrinkApp
@@ -39,10 +40,13 @@ class MainActivity : ComponentActivity() {
             initiallySelectedDate = savedInstanceState?.getString("selectedDate")?.let(LocalDate::parse),
             onDataChanged = reminders::refresh,
         )
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.light(android.graphics.Color.WHITE, android.graphics.Color.WHITE),
+        )
         setContent { DrinkApp(controller, reminders, onSaveReminders = ::saveReminders,
-            onConfigurePlan = { request -> controller.configurePlan(request) {
-                saveReminders(reminders.config.copy(enabled = true))
+            onConfigurePlan = { request, config -> reminders.save(config.copy(enabled = false)) {
+                controller.configurePlan(request) { saveReminders(config.copy(enabled = true)) }
             } }, onNotificationSettings = {
                 startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
             }) }
@@ -79,4 +83,7 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 }
+
+
+
 

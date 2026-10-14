@@ -50,3 +50,14 @@ Previous scenarios allowing goal changes after recording or manual notification 
 | Date/device/build | Scenario IDs | Result/issue |
 | --- | --- | --- |
 | Pending final functional run | All | Not run |
+
+## Setup UI revision — pending manual verification
+- UI-01: White background and black controls/text even in device dark mode. Goal and attempts appear before sleeping hours on one screen.
+- UI-02: Edit 2,000 mL / 10 attempts to 1,000 / 5: adjacent amount updates immediately to 200 mL; invalid/blank entries disable Start.
+- UI-03: Type sleep 10:00 PM and wake 8:00 AM without a clock picker. Toggle AM/PM and verify preview changes; midnight is 12:00 AM and noon 12:00 PM.
+- UI-04: Reminder list shows every time with AM/PM and mL. Editing either sleep field recalculates it; malformed/equal times disable Start.
+- UI-05: Today/7 days selection remains visible; passed times clearly marked. Start saves the reviewed plan before requesting notification permission.
+- UI-06: Keyboard, large text, rotation, scrolling and Cancel preserve usable controls and draft values. Failed save allows retry.
+- UI-07: Existing locked plans and records survive update. Existing History remains unchanged; history enhancements are deferred.
+Previous sleep-first/clock-picker expectations are superseded by UI-01 through UI-07. All new manual scenarios: Not run.
+UI capture check: actual setup form and scrolled schedule/Start button visually inspected on Medium Phone API 36.1; fixed malformed separator glyph. This is screenshot verification only, not completion of UI-01 through UI-07 or final functional testing.

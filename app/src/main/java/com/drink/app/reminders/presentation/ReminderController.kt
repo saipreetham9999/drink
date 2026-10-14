@@ -32,11 +32,11 @@ class ReminderController(context: Context) : AutoCloseable {
     fun refresh() { update() }
     private var loaded = false
 
-    fun save(value: ReminderConfig) {
-        if (!closed) update { ReminderScheduler.configure(context, value) }
+    fun save(value: ReminderConfig, afterSave: () -> Unit = {}) {
+        if (!closed) update(action = { ReminderScheduler.configure(context, value) }, afterSave = afterSave)
     }
 
-    private fun update(action: () -> Unit = {}) {
+    private fun update(action: () -> Unit = {}, afterSave: () -> Unit = {}) {
         if (closed) return
         busy = true
         pendingOperations++
@@ -57,6 +57,7 @@ class ReminderController(context: Context) : AutoCloseable {
                     error = result.isFailure
                     pendingOperations--
                     busy = pendingOperations > 0
+                    if (result.isSuccess) afterSave()
                 }
             }
         }
@@ -64,4 +65,5 @@ class ReminderController(context: Context) : AutoCloseable {
 
     override fun close() { closed = true; executor.shutdown() }
 }
+
 

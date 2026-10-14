@@ -2,7 +2,7 @@ shall we start# Drink — Implementation Tasks
 
 ## Current scope
 
-Phase 4 is active: sleep-first setup, daily/seven-day target and attempts, and offline reminders calculated across waking hours. Preserve extra intake and read-only history; lock the daily plan after any recorded drink. No separate settings screen.
+Phase 4 is active: combined goal-first setup UI, AM/PM sleep fields, live amount and reminder preview, and daily/seven-day plans. Preserve extra intake and read-only history; lock the daily plan after any recorded drink. No separate settings screen.
 
 Current request: revise Phase 4 into sleep-first setup, daily/seven-day target and attempts, per-attempt recording, and automatic waking-hour reminder slots. Lock the day's plan after its first recorded drink. Preserve read-only history and optional extra water. Update TEST_SCENARIOS.md; final functional testing remains deferred.
 
@@ -111,3 +111,10 @@ Sleep-first revision: implemented schema 3 daily/seven-day plans, exact whole-mL
 
 Revised Phase 4 emulator verification: installed both APKs with adb install -r. Initial instrumentation process was killed for startup ANR on the slow emulator; explicit-class retry of adb shell am instrument -w passed all 6 tests (four hydration database, reminder preferences, template). Coverage includes schema 1/2 migrations, preserved past goals, exact attempt totals, plan locking after attempt/extra, weekly rollover/expiry, and reopening persistence. MainActivity launch succeeded; fresh UI hierarchy confirms sleeping-hours setup and both time controls. A Pixel Launcher ANR dialog initially obscured the screen; dismissing it exposed Drink. No user intake was cleared. Actual reminders/full manual sequence remain Not run in TEST_SCENARIOS.md.
 Recommended next task: manually exercise the approved setup and attempt flow, then run the final functional checklist when development is complete.
+
+Current active work: Phase 4 setup UI only. Implement combined goal-first monochrome form, editable 12-hour sleep/wake fields, live amount and reminder preview. Preserve existing storage/rules; no history enhancements in this step. Verification pending.
+
+
+Setup UI implementation: added ui/setup/PlanSetup.kt, EditableTime.kt, SleepSetup.kt and ui/theme/DrinkTheme.kt; removed setup composables from Home. MainActivity sequences successful sleep-config saving before plan saving/notification permission. Existing hydration rules, schema, records and history implementation remain unchanged. TEST_SCENARIOS.md has UI-01 through UI-07; manual statuses remain Not run. :app:assembleDebug and :app:testDebugUnitTest succeeded (12 tests). No adb devices connected, so visual/device verification remains pending; review setup before further history work.
+Setup UI verification complete: gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --console=plain returned BUILD SUCCESSFUL. All 12 unit tests passed; lint completed without build-blocking errors. Visual/manual acceptance remains pending with no device connected.
+UI screenshot verification: booted Medium Phone API 36.1, installed latest APK with adb install -r and opened the actual combined setup. Captured goal/attempt/AM-PM fields and scrolled reminder list/Start plan in app/build/ui-preview. Found and fixed text encoding in PlanSetup and ReminderControls (plain separators and UTF-8 source); offline assembleDebug passed and corrected text verified in captured UI. Android System UI startup ANR was dismissed. No plan was started and no intake was added; full functional checks remain pending.
