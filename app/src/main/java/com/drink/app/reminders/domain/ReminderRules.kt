@@ -7,6 +7,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 object ReminderRules {
     fun valid(config: ReminderConfig): Boolean = config.sleepTime != config.wakeTime
@@ -41,7 +42,7 @@ object ReminderRules {
                 if (offset < durations[periodIndex]) { result = period.first.plusSeconds(offset); break }
                 offset -= durations[periodIndex]
             }
-            checkNotNull(result)
+            checkNotNull(result).truncatedTo(ChronoUnit.MINUTES)
         }.filter { !isSleeping(it.toLocalTime(), config) }.distinctBy { it.toInstant() }
     }
 

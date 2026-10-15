@@ -9,39 +9,54 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Bundle
 import com.drink.app.MainActivity
 import com.drink.app.R
+import java.time.LocalDate
 
 object ReminderNotifier {
     const val CHANNEL = "water_reminders"
-    private const val ID = 100
+    internal const val ID = 100
+    private const val PLAN_DATE = "drink_plan_date"
+    private const val COMPLETED = "drink_completed"
+    private const val AMOUNT = "drink_amount_ml"
 
-    fun createChannel(context: Context) {
+    fun createChannel(context: Context, channel: String = CHANNEL) {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel(CHANNEL, context.getString(R.string.reminders), NotificationManager.IMPORTANCE_DEFAULT))
+            NotificationChannel(channel, context.getString(R.string.reminders), NotificationManager.IMPORTANCE_DEFAULT))
     }
 
-    fun allowed(context: Context): Boolean {
+    fun allowed(context: Context, channel: String = CHANNEL): Boolean {
         if (Build.VERSION.SDK_INT >= 33 && context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false
         val manager = context.getSystemService(NotificationManager::class.java)
-        return manager.areNotificationsEnabled() && manager.getNotificationChannel(CHANNEL)?.importance != NotificationManager.IMPORTANCE_NONE
+        return manager.areNotificationsEnabled() && manager.getNotificationChannel(channel)?.importance != NotificationManager.IMPORTANCE_NONE
     }
 
-    fun show(context: Context, amountMl: Int) {
-        createChannel(context)
-        if (!allowed(context)) return
+    fun show(context: Context, amountMl: Int, date: LocalDate, completed: Int,
+        channel: String = CHANNEL, id: Int = ID): Boolean {
+        createChannel(context, channel)
+        if (!allowed(context, channel)) return false
         val intent = Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val open = PendingIntent.getActivity(context, 100, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val notification = Notification.Builder(context, CHANNEL)
+        val notification = Notification.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_water_notification)
             .setContentTitle(context.getString(R.string.reminder_notification_title))
             .setContentText("Time for $amountMl mL. Open Drink to record it.")
+            .addExtras(Bundle().apply { putString(PLAN_DATE, date.toString()); putInt(COMPLETED, completed); putInt(AMOUNT, amountMl) })
             .setContentIntent(open).setAutoCancel(true).setOnlyAlertOnce(false)
             .setVisibility(Notification.VISIBILITY_PRIVATE).build()
-        try { context.getSystemService(NotificationManager::class.java).notify(ID, notification) }
-        catch (_: SecurityException) { /* Permission can be revoked between checking and posting. */ }
+        return try { context.getSystemService(NotificationManager::class.java).notify(id, notification); true }
+        catch (_: SecurityException) { false }
     }
 
-    fun cancel(context: Context) { context.getSystemService(NotificationManager::class.java).cancel(ID) }
+    fun clearUnless(context: Context, date: LocalDate?, completed: Int, amountMl: Int?, id: Int = ID) {
+        val manager = context.getSystemService(NotificationManager::class.java)
+        val active = manager.activeNotifications.firstOrNull { it.id == id } ?: return
+        if (date == null || active.notification.extras.getString(PLAN_DATE) != date.toString() ||
+            active.notification.extras.getInt(COMPLETED, -1) != completed ||
+            active.notification.extras.getInt(AMOUNT, -1) != amountMl) cancel(context, id)
+    }
+
+    fun cancel(context: Context, id: Int = ID) { context.getSystemService(NotificationManager::class.java).cancel(id) }
 }
 

@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.drink.app.hydration.domain.HydrationRules
+import com.drink.app.ui.format.displayTime
+import com.drink.app.hydration.domain.PlanRules
 import com.drink.app.hydration.model.HomeState
 import com.drink.app.hydration.model.PlanRequest
 import com.drink.app.reminders.domain.ReminderRules
@@ -18,7 +20,7 @@ import java.time.ZonedDateTime
 
 @Composable
 fun PlanSetup(home: HomeState, config: ReminderConfig, busy: Boolean, error: Boolean,
-    onSave: (PlanRequest, ReminderConfig) -> Unit, onCancel: (() -> Unit)? = null) {
+    onSave: (PlanRequest, ReminderConfig) -> Unit, onHistory: () -> Unit, onCancel: (() -> Unit)? = null) {
     var goal by rememberSaveable(home.date) { mutableStateOf((home.plan?.goalMl ?: 2000).toString()) }
     var attempts by rememberSaveable(home.date) { mutableStateOf((home.plan?.attempts ?: 10).toString()) }
     var weekly by rememberSaveable(home.date) { mutableStateOf(home.plan?.endsOn?.isAfter(home.date) == true) }
@@ -32,7 +34,7 @@ fun PlanSetup(home: HomeState, config: ReminderConfig, busy: Boolean, error: Boo
     val s = enteredTime(sleep, sleepPm)
     val w = enteredTime(wake, wakePm)
     val draft = if (s != null && w != null && s != w) config.copy(sleepConfigured = true, sleepTime = s, wakeTime = w) else null
-    val fits = valid && draft != null && ReminderRules.supports(home.date, a!!, draft)
+    val fits = valid && draft != null && PlanRules.valid(PlanRequest(g!!, a!!, if (weekly) 7 else 1), draft, home.date)
     Text("Your water plan", style = MaterialTheme.typography.headlineLarge)
     OutlinedTextField(goal, { goal = it }, label = { Text("Daily goal (mL)") }, singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), enabled = !busy, modifier = Modifier.fillMaxWidth())
@@ -41,8 +43,9 @@ fun PlanSetup(home: HomeState, config: ReminderConfig, busy: Boolean, error: Boo
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), enabled = !busy, modifier = Modifier.weight(1f))
         Column(Modifier.weight(1f).padding(top = 12.dp)) {
             if (valid) {
-                val low = g!! / a!!
-                val high = low + if (g % a > 0) 1 else 0
+                val range = HydrationRules.attemptRange(g!!, a!!)
+                val low = range.first
+                val high = range.last
                 Text(if (low == high) "$low mL" else "$low-$high mL", style = MaterialTheme.typography.titleLarge)
                 Text("per attempt")
             } else Text("Enter goal and attempts")
@@ -74,6 +77,7 @@ fun PlanSetup(home: HomeState, config: ReminderConfig, busy: Boolean, error: Boo
     Button(onClick = { onSave(PlanRequest(g!!, a!!, if (weekly) 7 else 1), draft!!) },
         enabled = !busy && fits, modifier = Modifier.fillMaxWidth()) { Text(if (busy) "Saving..." else "Start plan") }
     Text("You can edit today's plan until you record your first drink.", style = MaterialTheme.typography.bodySmall)
+    TextButton(onClick = onHistory, enabled = !busy) { Text("History") }
     onCancel?.let { TextButton(onClick = it, enabled = !busy) { Text("Cancel") } }
 }
 

@@ -10,6 +10,11 @@ object HydrationRules {
         require(validPlan(goalMl, attempts) && index in 0 until attempts)
         return goalMl / attempts + if (index < goalMl % attempts) 1 else 0
     }
+    fun attemptRange(goalMl: Int, attempts: Int): IntRange =
+        attemptAmount(goalMl, attempts, attempts - 1)..attemptAmount(goalMl, attempts, 0)
+
+    fun remainingMl(totalMl: Long, goalMl: Int): Long =
+        (goalMl.coerceAtLeast(0).toLong() - totalMl.coerceAtLeast(0)).coerceAtLeast(0)
     fun completionPercent(totalMl: Long, goalMl: Int): Long =
         if (goalMl <= 0) 0 else (totalMl.toDouble() * 100 / goalMl).toLong()
     fun validAmount(value: String): Int? = value.toIntOrNull()?.takeIf { it in 1..100000 }

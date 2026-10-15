@@ -1,5 +1,6 @@
 package com.drink.app.ui.setup
 
+import com.drink.app.ui.format.displayTime
 import org.junit.Assert.*
 import org.junit.Test
 import java.time.LocalTime

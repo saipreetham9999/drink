@@ -7,7 +7,7 @@ import com.drink.app.reminders.model.ReminderConfig
 
 @Composable
 fun SleepSetup(config: ReminderConfig, busy: Boolean, error: Boolean,
-    onSave: (ReminderConfig) -> Unit, onCancel: (() -> Unit)? = null) {
+    onSave: (ReminderConfig) -> Unit, onCancel: (() -> Unit)? = null, onHistory: (() -> Unit)? = null) {
     var sleep by rememberSaveable { mutableStateOf(editableTime(config.sleepTime)) }
     var sleepPm by rememberSaveable { mutableStateOf(config.sleepTime.hour >= 12) }
     var wake by rememberSaveable { mutableStateOf(editableTime(config.wakeTime)) }
@@ -21,4 +21,5 @@ fun SleepSetup(config: ReminderConfig, busy: Boolean, error: Boolean,
     Button(onClick = { onSave(config.copy(sleepConfigured = true, sleepTime = s!!, wakeTime = w!!)) },
         enabled = !busy && s != null && w != null && s != w) { Text("Save sleeping hours") }
     onCancel?.let { TextButton(onClick = it, enabled = !busy) { Text("Back") } }
+    onHistory?.let { TextButton(onClick = it, enabled = !busy) { Text("History") } }
 }

@@ -45,8 +45,8 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.light(android.graphics.Color.WHITE, android.graphics.Color.WHITE),
         )
         setContent { DrinkApp(controller, reminders, onSaveReminders = ::saveReminders,
-            onConfigurePlan = { request, config -> reminders.save(config.copy(enabled = false)) {
-                controller.configurePlan(request) { saveReminders(config.copy(enabled = true)) }
+            onConfigurePlan = { request, config -> controller.configurePlan(request, config) {
+                saveReminders(config.copy(enabled = true))
             } }, onNotificationSettings = {
                 startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
             }) }

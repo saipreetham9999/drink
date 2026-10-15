@@ -7,6 +7,29 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 class HydrationRulesTest {
+    @Test fun allocationIsExactAcrossLimitsAndRemainders() {
+        for (goal in listOf(1, 2, 31, 32, 33, 1001, 2000, 99999, 100000)) {
+            for (attempts in 1..minOf(goal, 32)) {
+                val amounts = (0 until attempts).map { HydrationRules.attemptAmount(goal, attempts, it) }
+                assertEquals(goal, amounts.sum())
+                assertTrue(amounts.all { it > 0 })
+                assertTrue(amounts.max() - amounts.min() <= 1)
+                assertEquals(amounts.min()..amounts.max(), HydrationRules.attemptRange(goal, attempts))
+            }
+        }
+    }
+    @Test fun invalidAllocationAndCompletedIndicesAreRejected() {
+        listOf(Triple(0, 10, 0), Triple(2000, 0, 0), Triple(2000, 33, 0), Triple(1, 2, 0),
+            Triple(100001, 10, 0), Triple(2000, 10, -1), Triple(2000, 10, 10)).forEach { (goal, attempts, index) ->
+            assertTrue(runCatching { HydrationRules.attemptAmount(goal, attempts, index) }.isFailure)
+        }
+    }
+    @Test fun remainingIntakeStopsAtZeroWithExtras() {
+        assertEquals(2000L, HydrationRules.remainingMl(0, 2000))
+        assertEquals(1800L, HydrationRules.remainingMl(200, 2000))
+        assertEquals(0L, HydrationRules.remainingMl(2100, 2000))
+        assertEquals(0L, HydrationRules.remainingMl(Long.MAX_VALUE, 2000))
+    }
     @Test fun attemptsSumExactlyToTarget() {
         assertEquals(List(10) { 200 }, (0..9).map { HydrationRules.attemptAmount(2000, 10, it) })
         assertEquals(listOf(334, 334, 333), (0..2).map { HydrationRules.attemptAmount(1001, 3, it) })

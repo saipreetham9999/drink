@@ -1,6 +1,7 @@
 package com.drink.app.ui.history
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import com.drink.app.ui.theme.DrinkTheme
+import com.drink.app.ui.format.displayTime
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,8 +26,7 @@ fun DrinkHistory(
     busy: Boolean, error: Boolean, onDate: (LocalDate) -> Unit, onBack: () -> Unit, onRetry: () -> Unit,
 ) {
     val dateFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-    val timeFormat = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-    MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
+    DrinkTheme {
         Surface(Modifier.fillMaxSize()) {
             LazyColumn(
                 Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 24.dp),
@@ -42,9 +42,10 @@ fun DrinkHistory(
                 }
                 if (busy && (selectedDate == null || detail == null)) item { CircularProgressIndicator() }
                 if (selectedDate == null) {
-                    if (!busy && days.isEmpty()) item { Text(stringResource(R.string.history_empty)) }
+                    if (!busy && !error && days.isEmpty()) item { Text(stringResource(R.string.history_empty)) }
                     items(days, key = { it.date.toString() }) { day ->
-                        Card(onClick = { onDate(day.date) }, modifier = Modifier.fillMaxWidth(), enabled = !busy) {
+                        Card(onClick = { onDate(day.date) }, modifier = Modifier.fillMaxWidth(), enabled = !busy,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(day.date.format(dateFormat), style = MaterialTheme.typography.titleMedium)
                                 Text(stringResource(R.string.amount_ml, day.totalMl))
@@ -54,7 +55,7 @@ fun DrinkHistory(
                     }
                 } else if (detail != null && detail.summary.date == selectedDate) {
                     item {
-                        Card(Modifier.fillMaxWidth()) {
+                        Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Text(stringResource(R.string.amount_ml, detail.summary.totalMl), style = MaterialTheme.typography.displaySmall)
                                 DayCompletion(detail.summary)
@@ -62,9 +63,10 @@ fun DrinkHistory(
                         }
                     }
                     item { Text(stringResource(R.string.recorded_intake), style = MaterialTheme.typography.titleMedium) }
+                    item { Text(stringResource(R.string.history_time_note), style = MaterialTheme.typography.bodySmall) }
                     items(detail.entries, key = { it.id }) { entry ->
                         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(Instant.ofEpochMilli(entry.recordedAt).atZone(ZoneId.systemDefault()).format(timeFormat))
+                            Text(displayTime(Instant.ofEpochMilli(entry.recordedAt).atZone(ZoneId.systemDefault()).toLocalTime()))
                             Text(stringResource(R.string.amount_ml, entry.amountMl.toLong()))
                         }
                     }

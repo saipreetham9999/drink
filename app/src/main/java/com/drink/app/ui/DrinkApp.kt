@@ -35,7 +35,7 @@ fun DrinkApp(controller: HydrationController, reminders: ReminderController,
     BackHandler(enabled = controller.historyOpen || editing) {
         if (editing) editing = false else controller.goBack()
     }
-    if (reminders.ready && reminders.config.sleepConfigured && controller.historyOpen) {
+    if (controller.historyOpen) {
         DrinkHistory(controller.history, controller.selectedDate, controller.detail, controller.busy, controller.error,
             onDate = controller::selectDate, onBack = controller::goBack, onRetry = controller::retry)
     } else DrinkTheme {
@@ -49,10 +49,12 @@ fun DrinkApp(controller: HydrationController, reminders: ReminderController,
                         if (controller.busy) CircularProgressIndicator()
                         if (controller.error) TextButton(onClick = controller::retry) { Text("Retry loading") }
                     }
-                    !reminders.config.sleepConfigured && home.hasRecords -> SleepSetup(reminders.config, reminders.busy, reminders.error, onSaveReminders)
+                    !reminders.config.sleepConfigured && home.hasRecords -> SleepSetup(reminders.config, reminders.busy, reminders.error,
+                        onSaveReminders, onHistory = controller::openHistory)
                     !reminders.config.sleepConfigured || home.plan == null || (editing && !home.hasRecords) ->
                         PlanSetup(home, reminders.config, controller.busy || reminders.busy, controller.error || reminders.error,
                             onSave = { plan, config -> submitted = true; onConfigurePlan(plan, config) },
+                            onHistory = controller::openHistory,
                             onCancel = if (home.plan == null) null else ({ editing = false }))
                     else -> DrinkHome(home, controller.busy, controller.error, controller::recordAttempt,
                         controller::addExtra, { editing = true }, controller::retry, controller::openHistory) {

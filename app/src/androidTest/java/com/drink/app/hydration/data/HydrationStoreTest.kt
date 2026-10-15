@@ -3,6 +3,7 @@ package com.drink.app.hydration.data
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.drink.app.hydration.model.PlanRequest
+import com.drink.app.reminders.model.SleepHours
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -14,6 +15,78 @@ class HydrationStoreTest {
     private fun stamp(date: LocalDate) = date.atTime(12, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
     private fun rejects(action: () -> Unit) {
         assertTrue(runCatching(action).isFailure)
+    }
+    @Test fun completeSetupPersistsAndLockedOrInvalidSaveChangesNothing() {
+        val name = "complete-setup-test.db"
+        context.deleteDatabase(name)
+        val date = LocalDate.now()
+        val hours = SleepHours(LocalTime.of(22, 0), LocalTime.of(8, 0))
+        try {
+            HydrationStore(context, name).use { store ->
+                store.savePlan(PlanRequest(2000, 10, 7), hours, date)
+                rejects { store.savePlan(PlanRequest(2000, 10, 2), hours.copy(sleepTime = LocalTime.of(23, 0)), date) }
+                assertEquals(hours, store.readSleepHours())
+                assertEquals(date.plusDays(6), store.readPlan(date)?.endsOn)
+                store.recordAttempt(date, stamp(date))
+                rejects { store.savePlan(PlanRequest(1500, 5, 1), hours.copy(sleepTime = LocalTime.of(23, 0)), date) }
+            }
+            HydrationStore(context, name).use { store ->
+                assertEquals(hours, store.readSleepHours())
+                assertEquals(2000, store.readPlan(date)?.goalMl)
+                assertEquals(10, store.readPlan(date)?.attempts)
+                assertEquals(200L, store.readToday(date).totalMl)
+                assertEquals(2000, store.readPlan(date.plusDays(6))?.goalMl)
+                assertNull(store.readPlan(date.plusDays(7)))
+            }
+        } finally { context.deleteDatabase(name) }
+    }
+
+    @Test fun failedSleepWriteRollsBackPlanAndAllowsRetry() {
+        val name = "setup-rollback-test.db"
+        context.deleteDatabase(name)
+        val date = LocalDate.now()
+        val oldHours = SleepHours(LocalTime.of(22, 0), LocalTime.of(8, 0))
+        val newHours = SleepHours(LocalTime.of(23, 0), LocalTime.of(7, 0))
+        try {
+            HydrationStore(context, name).use { store ->
+                store.savePlan(PlanRequest(2000, 10, 7), oldHours, date)
+                for (table in listOf("sleep_hours", "daily_goals", "plan_template")) {
+                    store.writableDatabase.execSQL("CREATE TRIGGER fail_write BEFORE INSERT ON $table BEGIN SELECT RAISE(ABORT, 'test storage failure'); END")
+                    rejects { store.savePlan(PlanRequest(1500, 5, 1), newHours, date) }
+                    assertEquals(oldHours, store.readSleepHours())
+                    assertEquals(2000, store.readPlan(date)?.goalMl)
+                    assertEquals(2000, store.readPlan(date.plusDays(6))?.goalMl)
+                    assertEquals(2000, store.readDay(date).summary.goalMl)
+                    store.writableDatabase.execSQL("DROP TRIGGER fail_write")
+                }
+                store.savePlan(PlanRequest(1500, 5, 1), newHours, date)
+                assertEquals(newHours, store.readSleepHours())
+                assertEquals(1500, store.readPlan(date)?.goalMl)
+                assertNull(store.readPlan(date.plusDays(1)))
+            }
+        } finally { context.deleteDatabase(name) }
+    }
+
+    @Test fun versionThreeUpgradePreservesPlansAndIntake() {
+        val name = "setup-v3-upgrade-test.db"
+        context.deleteDatabase(name)
+        val date = LocalDate.now()
+        try {
+            HydrationStore(context, name).use { store ->
+                store.configurePlan(PlanRequest(2000, 10, 7), date)
+                store.recordAttempt(date, stamp(date))
+                store.writableDatabase.execSQL("DROP TABLE sleep_hours")
+                store.writableDatabase.version = 3
+            }
+            HydrationStore(context, name).use { store ->
+                assertEquals(4, store.readableDatabase.version)
+                assertNull(store.readSleepHours())
+                assertEquals(2000, store.readPlan(date)?.goalMl)
+                assertEquals(1, store.readToday(date).recordedAttempts)
+                assertEquals(200L, store.readToday(date).totalMl)
+                assertEquals(date.plusDays(6), store.readPlan(date)?.endsOn)
+            }
+        } finally { context.deleteDatabase(name) }
     }
     @Test fun recordingLocksPlanAndExtrasPreserveAttemptsAndHistory() {
         val name = "plan-lock-test.db"

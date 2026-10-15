@@ -20,6 +20,7 @@
     <string name="completion">%1$d%% of daily goal completed</string>
     <string name="goal_unavailable">Goal was not saved for this day.</string>
     <string name="recorded_intake">Recorded intake</string>
+    <string name="history_time_note">Times shown in your phone\'s current timezone.</string>
     <string name="reminders">Water reminders</string>
     <string name="reminders_off">Off</string>
     <string name="reminders_on">On · approximate interval: %1$d min</string>

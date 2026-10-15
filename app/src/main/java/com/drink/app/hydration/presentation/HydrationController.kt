@@ -10,7 +10,11 @@ import com.drink.app.hydration.model.DayIntake
 import com.drink.app.hydration.model.HistoryDay
 import com.drink.app.hydration.model.HomeState
 import com.drink.app.hydration.model.PlanRequest
+import com.drink.app.hydration.domain.SavePlan
+import com.drink.app.hydration.domain.RecordAttempt
+import com.drink.app.reminders.model.ReminderConfig
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.concurrent.Executors
 
 /** Handles hydration actions and screen state; storage work stays off the main thread. */
@@ -19,6 +23,7 @@ class HydrationController(
     historyInitiallyOpen: Boolean = false,
     initiallySelectedDate: LocalDate? = null,
     private val onDataChanged: () -> Unit = {},
+    private val currentTime: () -> ZonedDateTime = { ZonedDateTime.now() },
 ) : AutoCloseable {
     private val storageExecutor = Executors.newSingleThreadExecutor()
     private val handler = Handler(Looper.getMainLooper())
@@ -31,7 +36,7 @@ class HydrationController(
         private set
     var historyOpen by mutableStateOf(historyInitiallyOpen)
         private set
-    var selectedDate by mutableStateOf(initiallySelectedDate)
+    var selectedDate by mutableStateOf(if (historyInitiallyOpen) initiallySelectedDate else null)
         private set
     var history by mutableStateOf<List<HistoryDay>>(emptyList())
         private set
@@ -48,17 +53,24 @@ class HydrationController(
     fun recordAttempt() {
         if (busy || closed) return
         val shown = home ?: return
-        val timestamp = System.currentTimeMillis()
-        update(action = { store.recordAttempt(shown.date, timestamp) }, afterSave = onDataChanged)
+        val now = currentTime()
+        val timestamp = now.toInstant().toEpochMilli()
+        update(action = {
+            RecordAttempt { plan, completed, recordedAt ->
+                store.recordAttempt(plan.date, recordedAt, expectedCompleted = completed, expectedPlan = plan, zone = now.zone)
+            }(shown, timestamp, now.zone)
+        }, afterSave = onDataChanged)
     }
 
     fun addExtra(amountMl: Int) {
         val shown = home ?: return
-        if (!busy && !closed) update(action = { store.addExtra(amountMl, shown.date) }, afterSave = onDataChanged)
+        val now = currentTime()
+        if (!busy && !closed) update(action = { store.addExtra(amountMl, shown.date, now.toInstant().toEpochMilli(), now.zone) }, afterSave = onDataChanged)
     }
 
-    fun configurePlan(request: PlanRequest, afterSave: () -> Unit) {
-        if (!busy && !closed) update(action = { store.configurePlan(request) }, afterSave = {
+    fun configurePlan(request: PlanRequest, config: ReminderConfig, afterSave: () -> Unit) {
+        val expectedDate = home?.date ?: return
+        if (!busy && !closed) update(action = { SavePlan(store::savePlan)(request, config, expectedDate, currentTime()) }, afterSave = {
             onDataChanged(); afterSave()
         })
     }
@@ -70,7 +82,7 @@ class HydrationController(
     }
 
     fun selectDate(date: LocalDate) {
-        if (busy || closed) return
+        if (busy || closed || !historyOpen || date >= currentTime().toLocalDate() || history.none { it.date == date }) return
         selectedDate = date
         detail = null
         update()
@@ -104,22 +116,27 @@ class HydrationController(
         storageExecutor.execute {
             val result = runCatching {
                 action()
-                Snapshot(store.readToday(), if (readHistory) store.readHistory() else emptyList(),
-                    requestedDate?.let(store::readDay))
+                val today = currentTime().toLocalDate()
+                val days = if (readHistory) store.readHistory(today) else emptyList()
+                val validSelection = requestedDate?.takeIf { date -> days.any { it.date == date } }
+                Snapshot(store.readToday(today), days, validSelection?.let(store::readDay))
             }
-            val recovered = if (result.isFailure) runCatching { store.readToday() }.getOrNull() else null
+            val recovered = if (result.isFailure) runCatching { store.readToday(currentTime().toLocalDate()) }.getOrNull() else null
             handler.post {
                 if (!closed) {
                     val oldDate = home?.date
                     home = result.getOrNull()?.home ?: recovered
                     result.getOrNull()?.let { snapshot ->
                         if (readHistory) history = snapshot.history
-                        if (selectedDate == requestedDate) detail = snapshot.detail
+                        if (readHistory && selectedDate == requestedDate) {
+                            detail = snapshot.detail
+                            selectedDate = snapshot.detail?.summary?.date
+                        }
                     }
                     error = result.isFailure
                     busy = false
+                    if (home != null && oldDate != home?.date) onDataChanged()
                     if (result.isSuccess) {
-                        if (oldDate != home?.date) onDataChanged()
                         afterSave()
                     }
                 }

@@ -12,8 +12,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val timeFormat = DateTimeFormatter.ofPattern("h:mm a", Locale.US)
-fun displayTime(time: LocalTime): String = time.format(timeFormat)
 fun enteredTime(value: String, pm: Boolean): LocalTime? {
     val parts = value.split(":")
     if (parts.size != 2 || !parts[0].matches(Regex("[0-9]{1,2}")) || !parts[1].matches(Regex("[0-9]{2}"))) return null

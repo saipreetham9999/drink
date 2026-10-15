@@ -5,7 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.drink.app.reminders.model.ReminderConfig
 import com.drink.app.ui.setup.SleepSetup
-import com.drink.app.ui.setup.displayTime
+import com.drink.app.ui.format.displayTime
 
 @Composable
 fun ReminderControls(config: ReminderConfig, busy: Boolean, error: Boolean, allowed: Boolean,
@@ -19,7 +19,7 @@ fun ReminderControls(config: ReminderConfig, busy: Boolean, error: Boolean, allo
         }
         Text("Reminders follow your attempts during waking hours. Android may delay them.")
         OutlinedButton(onClick = { editing = true }, enabled = !busy) { Text("Change sleeping hours") }
-        if (config.enabled && !allowed) TextButton(onClick = onSettings) { Text("Allow notifications") }
+        if (!allowed) TextButton(onClick = onSettings) { Text("Allow notifications") }
         if (error) { Text("Could not update reminders. Check sleeping hours and try again.")
             TextButton(onClick = onRetry, enabled = !busy) { Text("Retry") } }
     }

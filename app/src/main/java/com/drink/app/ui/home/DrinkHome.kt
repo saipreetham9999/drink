@@ -24,13 +24,13 @@ fun DrinkHome(home: HomeState, busy: Boolean, error: Boolean, onRecord: () -> Un
             Text("${HydrationRules.completionPercent(home.totalMl, home.goalMl)}% completed")
             LinearProgressIndicator(progress = { HydrationRules.progress(home.totalMl, home.goalMl) }, modifier = Modifier.fillMaxWidth())
             Text("${home.recordedAttempts} / ${plan.attempts} attempts recorded")
+            Text("${home.remainingMl} mL and ${home.remainingAttempts} attempts remaining")
             if (plan.endsOn > home.date) Text("Daily plan through ${plan.endsOn}")
         }
     }
-    val remaining = home.recordedAttempts < plan.attempts
-    val amount = if (remaining) HydrationRules.attemptAmount(plan.goalMl, plan.attempts, home.recordedAttempts) else 0
-    Button(onClick = onRecord, enabled = !busy && remaining, modifier = Modifier.fillMaxWidth()) {
-        Text(if (remaining) "Record $amount mL" else "All attempts recorded")
+    val amount = home.nextAmountMl
+    Button(onClick = onRecord, enabled = !busy && amount != null, modifier = Modifier.fillMaxWidth()) {
+        Text(if (amount != null) "Record $amount mL" else "All attempts recorded")
     }
     if (!home.hasRecords) OutlinedButton(onClick = onEdit, enabled = !busy) { Text("Edit today's plan") }
     else Text("Today's plan is fixed after your first recorded drink.")
