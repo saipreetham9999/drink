@@ -10,7 +10,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import com.drink.app.MainActivity
+import com.drink.app.camera.CameraSessionActivity
+import com.drink.app.camera.data.DetectionPreferences
 import com.drink.app.R
 import java.time.LocalDate
 
@@ -36,12 +37,16 @@ object ReminderNotifier {
         channel: String = CHANNEL, id: Int = ID): Boolean {
         createChannel(context, channel)
         if (!allowed(context, channel)) return false
-        val intent = Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        // Recheck opt-in when tapped, including notifications posted before the switch changed.
+        val intent = Intent(context, CameraSessionActivity::class.java)
+            .setAction(CameraSessionActivity.REMINDER_TAP).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val open = PendingIntent.getActivity(context, 100, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val notification = Notification.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_water_notification)
             .setContentTitle(context.getString(R.string.reminder_notification_title))
-            .setContentText("Time for $amountMl mL. Open Drink to record it.")
+            .setContentText(if (DetectionPreferences(context).enabled)
+                "Time for $amountMl mL. Tap to open a camera session (up to 4 minutes)."
+                else "Time for $amountMl mL. Open Drink to record it.")
             .addExtras(Bundle().apply { putString(PLAN_DATE, date.toString()); putInt(COMPLETED, completed); putInt(AMOUNT, amountMl) })
             .setContentIntent(open).setAutoCancel(true).setOnlyAlertOnce(false)
             .setVisibility(Notification.VISIBILITY_PRIVATE).build()

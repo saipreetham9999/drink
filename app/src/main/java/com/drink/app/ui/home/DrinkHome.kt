@@ -16,7 +16,6 @@ fun DrinkHome(home: HomeState, busy: Boolean, error: Boolean, onRecord: () -> Un
     onExtra: (Int) -> Unit, onEdit: () -> Unit, onRetry: () -> Unit, onHistory: () -> Unit,
     reminderControls: @Composable () -> Unit) {
     val plan = checkNotNull(home.plan)
-    Text("Drink", style = MaterialTheme.typography.headlineLarge)
     Text(home.date.toString())
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

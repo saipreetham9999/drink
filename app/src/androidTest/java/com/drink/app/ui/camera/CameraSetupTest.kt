@@ -52,6 +52,7 @@ class CameraSetupTest {
         assertEquals("Run this check with camera permission denied", PackageManager.PERMISSION_DENIED,
             instrumentation.targetContext.checkSelfPermission(Manifest.permission.CAMERA))
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            click("Dev")
             click("Camera setup")
             awaitCondition("Initially stopped") { visible("Camera stopped") }
             click("Start")
@@ -68,7 +69,9 @@ class CameraSetupTest {
             assertFalse(visible("Camera active - preview only"))
             scenario.onActivity { assertNull(preview(it.window.decorView)) }
             click("Back")
-            awaitCondition("Main app remains accessible") { visible("Camera setup") }
+            awaitCondition("Camera returns to Dev") { visible("Test features under development.") }
+            click("Back")
+            awaitCondition("Main app remains accessible") { visible("Dev") && visible("Drink") }
         }
     }
 
@@ -76,6 +79,7 @@ class CameraSetupTest {
         assertEquals(PackageManager.PERMISSION_DENIED,
             instrumentation.targetContext.checkSelfPermission(Manifest.permission.CAMERA))
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            click("Dev")
             click("Camera setup")
             click("Start")
             val allowId = "com.android.permissioncontroller:id/permission_allow_foreground_only_button"
@@ -135,7 +139,7 @@ class CameraSetupTest {
             click("Back")
             instrumentation.runOnMainSync { assertTrue(backed) }
             scenario.recreate()
-            awaitCondition("Recreation returns to normal app") { visible("Camera setup") }
+            awaitCondition("Recreation returns to normal app") { visible("Dev") }
             assertFalse(visible("Camera active - preview only"))
         }
     }

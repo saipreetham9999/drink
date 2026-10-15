@@ -79,7 +79,7 @@ class HydrationStoreTest {
                 store.writableDatabase.version = 3
             }
             HydrationStore(context, name).use { store ->
-                assertEquals(4, store.readableDatabase.version)
+                assertEquals(5, store.readableDatabase.version)
                 assertNull(store.readSleepHours())
                 assertEquals(2000, store.readPlan(date)?.goalMl)
                 assertEquals(1, store.readToday(date).recordedAttempts)

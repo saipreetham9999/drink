@@ -15,7 +15,7 @@ import java.time.ZoneId
 
 /** Database access is confined to background executors. Entries remain append-only. */
 class HydrationStore(context: Context, databaseName: String = "hydration.db") :
-    SQLiteOpenHelper(context, databaseName, null, 4) {
+    SQLiteOpenHelper(context, databaseName, null, 5) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE intake (id INTEGER PRIMARY KEY, recorded_at INTEGER NOT NULL, amount_ml INTEGER NOT NULL CHECK(amount_ml > 0), local_date TEXT NOT NULL, is_attempt INTEGER NOT NULL DEFAULT 0)")
         db.execSQL("CREATE INDEX intake_date ON intake(local_date)")
@@ -24,6 +24,7 @@ class HydrationStore(context: Context, databaseName: String = "hydration.db") :
         db.execSQL("CREATE TABLE daily_goals (local_date TEXT PRIMARY KEY, goal_ml INTEGER NOT NULL CHECK(goal_ml > 0))")
         createPlans(db)
         createSleepHours(db)
+        createCandidateTokens(db)
     }
 
     private fun createPlans(db: SQLiteDatabase) {
@@ -33,6 +34,11 @@ class HydrationStore(context: Context, databaseName: String = "hydration.db") :
 
     private fun createSleepHours(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE sleep_hours (id INTEGER PRIMARY KEY CHECK(id = 1), sleep_time TEXT NOT NULL, wake_time TEXT NOT NULL)")
+    }
+
+    private fun createCandidateTokens(db: SQLiteDatabase) {
+        db.execSQL("ALTER TABLE intake ADD COLUMN candidate_token TEXT")
+        db.execSQL("CREATE UNIQUE INDEX intake_candidate ON intake(candidate_token)")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -58,6 +64,7 @@ class HydrationStore(context: Context, databaseName: String = "hydration.db") :
             }
         }
         if (oldVersion < 4) createSleepHours(db)
+        if (oldVersion < 5) createCandidateTokens(db)
     }
 
     fun readSleepHours(): SleepHours? = readableDatabase.rawQuery("SELECT sleep_time, wake_time FROM sleep_hours WHERE id = 1", null).use {
@@ -145,7 +152,7 @@ class HydrationStore(context: Context, databaseName: String = "hydration.db") :
     fun recordedAttempts(date: LocalDate): Int = counts(readableDatabase, date).second
 
     fun recordAttempt(expectedDate: LocalDate, recordedAt: Long = System.currentTimeMillis(),
-        expectedCompleted: Int? = null, expectedPlan: DailyPlan? = null, zone: ZoneId = ZoneId.systemDefault()) {
+        expectedCompleted: Int? = null, expectedPlan: DailyPlan? = null, zone: ZoneId = ZoneId.systemDefault(), candidateToken: String? = null) {
         val date = localDate(recordedAt, zone)
         check(date == expectedDate) { "The day changed. Set or review today's plan." }
         val db = writableDatabase
@@ -157,13 +164,13 @@ class HydrationStore(context: Context, databaseName: String = "hydration.db") :
             check(expectedCompleted == null || expectedCompleted == completed) { "Intake changed. Review it before recording." }
             check(completed < plan.attempts) { "All planned attempts are recorded" }
             putDay(db, plan)
-            insertEntry(db, date, recordedAt, HydrationRules.attemptAmount(plan.goalMl, plan.attempts, completed), true)
+            insertEntry(db, date, recordedAt, HydrationRules.attemptAmount(plan.goalMl, plan.attempts, completed), true, candidateToken)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }
 
     fun addExtra(amountMl: Int, expectedDate: LocalDate, recordedAt: Long = System.currentTimeMillis(),
-        zone: ZoneId = ZoneId.systemDefault()) {
+        zone: ZoneId = ZoneId.systemDefault(), candidateToken: String? = null) {
         require(amountMl in 1..100000)
         val date = localDate(recordedAt, zone)
         check(date == expectedDate) { "The day changed. Review today's plan." }
@@ -172,14 +179,35 @@ class HydrationStore(context: Context, databaseName: String = "hydration.db") :
         try {
             val plan = checkNotNull(readPlan(date)) { "Set a daily plan first" }
             putDay(db, plan)
-            insertEntry(db, date, recordedAt, amountMl, false)
+            insertEntry(db, date, recordedAt, amountMl, false, candidateToken)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }
 
-    private fun insertEntry(db: SQLiteDatabase, date: LocalDate, timestamp: Long, amount: Int, attempt: Boolean) {
+    /** Outer transaction includes snapshot validation and the unique token; nested actions cannot commit independently. */
+    fun recordConfirmedIntake(token: String, shown: HomeState, detectedAt: Long, amount: Int, planned: Boolean,
+        recordedAt: Long, zone: ZoneId): Boolean {
+        require(token.isNotBlank() && token.length <= 128)
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            val exists = db.rawQuery("SELECT id FROM intake WHERE candidate_token = ?", arrayOf(token)).use { it.moveToFirst() }
+            if (exists) { db.setTransactionSuccessful(); return false }
+            check(localDate(recordedAt, zone) == shown.date && localDate(detectedAt, zone) == shown.date)
+            check(shown.plan != null && readPlan(shown.date) == shown.plan && counts(db, shown.date).second == shown.recordedAttempts)
+            if (planned) {
+                check(amount == shown.nextAmountMl)
+                recordAttempt(shown.date, recordedAt, shown.recordedAttempts, shown.plan, zone, token)
+            } else addExtra(amount, shown.date, recordedAt, zone, token)
+            db.setTransactionSuccessful()
+            return true
+        } finally { db.endTransaction() }
+    }
+
+    private fun insertEntry(db: SQLiteDatabase, date: LocalDate, timestamp: Long, amount: Int, attempt: Boolean, token: String? = null) {
         db.insertOrThrow("intake", null, ContentValues().apply {
             put("recorded_at", timestamp); put("amount_ml", amount); put("local_date", date.toString()); put("is_attempt", if (attempt) 1 else 0)
+            if (token != null) put("candidate_token", token)
         })
     }
 

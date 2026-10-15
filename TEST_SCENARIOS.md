@@ -125,3 +125,69 @@ History development verification: 35 unit tests passed; 5 focused database/contr
 - CAM-08: On a physical target phone near 4 GB RAM measure startup latency, memory, UI responsiveness and battery/temperature during sustained preview; document device/results before landmark analysis.
 
 Camera development verification: final build, 35 unit tests and lint passed (0 errors, 51 nonfatal warnings). Direct instrumentation passed three camera checks across runs: real permission denial and allow dialogs, actual live STREAMING/IDLE transitions, repeated Start/Stop, background return and recreation. Another 28 existing hydration/history/reminder-preference tests passed. Preview overflow was found in screenshot inspection, fixed with clipping and reverified. Original camera-denied state restored and notification denial preserved. Merged manifest excludes network/audio/media storage; preview has no capture/analyzer or hydration writes. These targeted emulator checks do not complete CAM-01 through CAM-08 or establish physical-phone performance.
+
+## Dev navigation - final manual statuses: Not run
+- DEV-01: Home and plan setup show Dev at the top right beside Drink; the old direct Camera setup link is absent there.
+- DEV-02: Dev opens a dedicated testing page. Camera setup is available there; opening Dev alone does not request permission or activate the camera.
+- DEV-03: Camera Back/Android Back returns to Dev and releases any active session. Dev Back/Android Back returns to the previous Home/setup state without changing intake or plan drafts.
+- DEV-04: Recreation restores the Dev/camera destination with the camera stopped; existing History navigation remains usable.
+Owner feedback: camera setup works on their phone. General page appearance will be refined separately; this does not complete all camera performance/manual scenarios.
+Dev navigation development checks: offline app/test APK build and lint passed (0 errors, 51 nonfatal warnings). Direct emulator checks passed for Dev -> Camera setup -> permission denial -> Dev -> Home/setup, and existing populated History navigation. A stale accessibility-node wait in the initial navigation test was corrected to await distinct Dev-page text; the focused retry passed. No intake changes or permission grants; final manual DEV scenarios remain Not run.
+
+## Dev notification test - final manual statuses: Not run
+- DEV-NOTIFY-01: Dev -> Test notification requests notification permission if needed. Allow posts an immediate Drink test notification, with sample text and no water recorded. Check the notification panel; heads-up/sound depends on Android/channel/DND settings.
+- DEV-NOTIFY-02: Deny or permanently block permission: no sample posts, recovery message and Notification settings link appear. Allow in settings, return and tap Test notification again.
+- DEV-NOTIFY-03: Disable the water-reminder channel: sample does not post and UI reports blocking. Restore the channel and retry.
+- DEV-NOTIFY-04: Repeat taps update one sample; actual hydration reminders are not replaced. Tapping the sample opens Drink, records no intake, and leaves reminder enabled/schedule/cooldown state alone.
+- DEV-NOTIFY-05: Reopening Dev does not send a sample automatically. Test works without a configured water plan, including when regular reminders are off. This is an immediate notification test, not verification of timed/background/Doze reminders.
+Dev notification development checks: offline app/test APK build and lint passed (0 errors, 51 nonfatal warnings). Three direct emulator tests passed: actual sample posting after the real Allow dialog, same water-reminder channel, repeat-tap replacement and opening without intake changes; blocked-channel failure; real Deny with settings recovery and no post. Sample/test channel cleaned up; original notification-denied state restored, camera remained denied. These checks do not verify timed alarms or complete the final manual DEV-NOTIFY scenarios.
+
+## Planned Phase 8 custom reminder audio - draft, Not run
+- AUDIO-01: Select a ringtone or import a personal voice clip; keep it on-device and retain the choice after reopening.
+- AUDIO-02: Verify agreed playback duration (requested around 30 seconds), early Stop, dismissal and repeated reminders without overlapping audio. Final rules pending owner preference.
+- AUDIO-03: Missing/deleted/unreadable audio, denied access and invalid files preserve usable standard reminders with clear recovery.
+- AUDIO-04: Test playback from Dev, permission/channel blocking, silent/DND, background operation and battery use against the selected Android implementation; do not assume bypass of phone sound controls.
+
+## Planned Phase 9 Tablets tab - draft, Not run
+- TABLETS-01: After Tablets meaning and requirements are confirmed, verify Water/Tablets navigation, retained input and separate records without altering existing water plans/history.
+- TABLETS-02: Add entry validation, persistence, scheduling, confirmation/history and migration cases only after the owner defines the feature. No medicine-specific behavior has been approved yet.
+Roadmap-only update: release/polish is now Phase 10. No runtime behavior changed and no build/device checks run for this update.
+
+Roadmap clarification: owner confirmed Tablets means medicine reminders, and custom reminder audio must not exceed 45 seconds. This supersedes the earlier tentative 30-second wording and Tablets ambiguity in the draft scenarios. AUDIO-02 must verify playback ends by 45 seconds, including longer imported clips, early stopping, repeat reminders and background playback. Medicine fields/schedules/recording rules and audio duration selection remain to be defined. Documentation only; scenarios Not run.
+
+## Phase 6 step 1 - notification camera sessions, final statuses Not run
+- SESSION-01: Camera detection is off by default on Home/setup; toggling persists across reopening and requests no camera permission or session by itself. Manual intake/reminders still work.
+- SESSION-02: Tap a water reminder with detection on: visible Water reminder camera opens, requests camera permission if needed, then starts preview with a four-minute countdown. Posting the alert alone never opens the camera.
+- SESSION-03: With detection off, reminder tap opens Home without camera permission/preview. Change the switch after an alert was posted: tapping honors its current value. Dev sample notifications always open ordinary Drink.
+- SESSION-04: Stop and Back release preview. Backgrounding/locking/recreation stops it and does not resume automatically. Late initialization/permission callbacks cannot reopen a cancelled session.
+- SESSION-05: Session initialization and active preview together cannot exceed the four-minute elapsed-time budget; countdown reaches zero and camera stops. Phone wall-clock changes do not extend the budget. Only a new explicit Start begins a new budget.
+- SESSION-06: Denied/permanently denied camera permission or missing/busy camera offers recovery, with manual tracking available. Closing/recreating during permission request cannot auto-start later.
+- SESSION-07: No videos/images/intake are saved; prototype states gesture detection is not implemented yet. Verify reminder scheduling/ledger and existing history are unaffected. Test cold/warm app notification taps on a physical phone, including locked screen (unlock before foreground camera).
+
+Phase 6 step 1 development checks: build/app and test APKs, 39 unit tests and lint passed (0 errors, 52 nonfatal warnings, 1 boxing hint). Seven direct emulator checks passed across runs: opt-in persistence/default, posted reminder's actual PendingIntent routing with switch changed after posting, visible streaming, background/recreation stopping, injected elapsed-time deadline releasing a real stream, denied camera permission/recreation, existing manual camera and populated History. Countdown/Stop screenshot inspected. These checks use PendingIntent.send from a foreground test harness and an injected clock; physical notification-panel/cold/locked taps, a real four-minute run, performance and final SESSION scenarios remain Not run. Original opt-in and denied camera/notification states restored; no owner intake changed.
+
+## Dev testing hub - final manual statuses Not run
+- HUB-01: Dev groups Camera, Notifications, and Hydration/reminder tests; scroll to all entries. Existing camera and sample-notification actions still work.
+- HUB-02: Camera detection in Dev shares Home's persisted opt-in. Merely opening Dev/toggling does not start camera. Send Test camera reminder, then tap it: switch on opens the capped visible camera session; off opens normal Drink. Samples use distinct IDs and do not replace real reminders or alter their schedule/ledger.
+- HUB-03: Test plans and intake opens a clearly labelled sandbox. Save daily/weekly plans, inspect amount/sleep/reminder previews, edit before first drink, record attempts/extras and verify locking and totals.
+- HUB-04: Next test day resets that test day's intake; +7 test days permits weekly-expiry checks. The actual phone clock and production plans/records remain unchanged.
+- HUB-05: Test history shows only sandbox records, with the same read-only date/detail screens. Record test water then advance a day to populate history. Reopening retains test records/test date; actual history remains unchanged.
+- HUB-06: Back and recreation preserve sensible testing navigation and release controllers/camera resources. No test entry for unimplemented detection, custom audio or medicines. Full hardware/Doze/real-duration checks remain separate.
+
+Dev hub development checks: offline app/test APK build, 39 unit tests and lint passed (0 errors, 53 nonfatal warnings, 1 boxing hint). Six direct emulator checks passed across runs: sandbox save/attempt/extra/next-day/history with production-total preservation; shared detection switch plus separate standard/camera samples opening the real session; existing manual camera; populated history; blocked channel; notification denial recovery. New harness scrolling/waits/actionable-parent handling corrected after initial failures. Samples/test fixtures cleaned up and original denied permissions/opt-in restored. Test records use an isolated named database; no owner intake cleared/fabricated. Full manual HUB scenarios and physical timing/performance checks remain Not run.
+
+## Phase 6 complete prototype - final manual statuses Not run
+- DETECT-01: Dev -> Test drinking detection -> Start runs offline bundled landmarks; face/shoulders/hands visible. Verify overlay rotation, mirroring, portrait/landscape, front/rear fallback and one-person positioning.
+- DETECT-02: Hand away, raise drink to mouth, hold briefly, lower hand: a Possible drink dialog may appear. Static hand, fast touches, low-confidence/lost landmarks and out-of-order/gapped frames must not complete a candidate. False positives remain possible; never claim swallowing or measured mL.
+- DETECT-03: One motion gives one pending suggestion; repeated frames/holds and actions within cooldown do not spam. Reject saves nothing. Candidate dialogs stay usable with camera stop/expiry/background behavior.
+- DETECT-04: Confirm planned serving adds one attempt exactly once. Corrected amount is explicitly extra water without consuming an attempt. No plan disables recording; invalid amounts cannot confirm. Duplicate taps, retries and reopening cannot duplicate a token.
+- DETECT-05: Change plan/count/date between suggestion and confirmation: no stale intake write. Inject write failure and retry; no partial record or consumed token. Upgrade schema 4 and earlier preserving records, plans and sleep hours.
+- DETECT-06: Stop, leave app, revoke camera, expiry/recreation or unavailable model releases camera/analysis resources. No automatic restart. Model unavailable still leaves manual hydration usable. Four-minute budget includes initialization.
+- DETECT-07: Dev -> Test drink confirmation explicitly simulates a suggestion in the sandbox; use it to test reject, confirm, correction, validation and history. Dev camera-reminder test uses sandbox too; production reminder confirmations use actual intake.
+- DETECT-08: Verify no Internet/network-state/audio/media-storage permissions and no remote logger/transport classes. Bundled model hash/license remain pinned; no raw frames/video/landmark logs persisted. First-run offline inference works.
+- DETECT-09: Record actual device/OS/RAM, camera orientation, analyzed frames/FPS, model startup, inference avg/max, app memory, temperature/battery over repeated four-minute sessions. Collect deliberate-drinking and non-drinking outcomes with consent for evaluation; do not claim accuracy from synthetic rule tests or a pose fixture. Final physical acceptance remains pending.
+
+Camera storage and lightweight delivery (2026-10-14; manual checks Not run)
+- LITE-01: Use repeated detection sessions, Stop, background, four-minute expiry and app restart. No video/photo/selected-frame files should be created in app private/cache/external directories or the gallery. Only confirmed hydration entries may be added. Rejected/unconfirmed candidates create no intake.
+- LITE-02: Repeat sessions on consecutive dates. No accumulated camera media should exist; no daily media-cleanup alarm/job or storage permission is needed. Existing hydration history remains available.
+- LITE-03: Inspect generated APKs: each contains only its named native ABI; no universal APK is listed in output-metadata.json. Install the matching ARM build on a phone and the matching x86_64 build on the emulator. Verify manual tracking and optional offline detection. Measure APK bytes, installed storage and sustained RAM separately.

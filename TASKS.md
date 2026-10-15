@@ -2,9 +2,21 @@ shall we start# Drink — Implementation Tasks
 
 ## Current scope
 
-Phase 5 is active: optional camera permission, preview and explicit Start/Stop. Preserve the combined goal-first setup, daily/seven-day plans, reminders and read-only history. No gesture analysis or automatic recording in this phase.
+2026-10-14 lightweight/storage request: audited production camera sources; no video/photo/frame file writers or recording use cases exist. Detection uses reusable memory buffers, closes ImageProxy frames and releases model/bitmaps on Stop. Preserve hydration history; save no selected frames or landmark history. No daily cleanup job was added because no media is created. Separate ABI APKs now omit other processors' native libraries (including continued 32-bit ARM support); no universal APK is produced. Extended PoseModelTest's permission assertions and added LITE-01 through LITE-03 to TEST_SCENARIOS.md; these native/manual checks remain pending.
 
-Current request: implement CameraX preview with permission explanation and release on leaving/backgrounding. Verification in progress; final manual functional sequence remains deferred.
+Verification for the packaging change: offline :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:lintDebug succeeded. Existing 49 unit-test results have zero failures/errors (Gradle reported the unit task up-to-date); instrumentation APK compiled, not executed. Archive inspection verified each metadata-listed APK contains exactly its named ABI. Measured debug APKs: armeabi-v7a 27,038,520 bytes; arm64-v8a 30,136,524; x86_64 32,577,744; x86 34,509,944. Prior universal debug APK was 65,217,941 bytes; no obsolete universal APK remains in the debug output directory. Updated DESIGN.md and MODEL_NOTES.md with no-media policy and per-device delivery. git diff --check passed. Installed storage, sustained RAM, camera file-growth and physical recognition accuracy remain unverified. Next task: device verification of Phase 6 and the no-media policy. No commit or push.
+
+Phase 6 is active: finish bundled local pose landmarks, temporal possible-drink candidates, cooldown/deduplication, explicit confirm/reject/correction and Dev testing. Keep the four-minute lifecycle cap, manual hydration, reminder scheduling and immutable history. No raw video or automatic intake recording.
+
+Current request: complete the Phase 6 prototype. MediaPipe Lite CPU tracking, bounded analysis, candidate rules and confirmation UI/actions are implemented; verification in progress. Schema 5 adds nullable unique candidate tokens so accepted retries cannot duplicate records. Planned servings use attempts; corrected amounts use extras. Dev detection and notification tests use sandbox records/test calendar. Physical accuracy/battery acceptance remains to be measured.
+
+Dev testing hub verification: DevTools groups camera, notification and hydration/reminder tests. DevNotification adds a separate tagged ID 102 for the camera-reminder path; ID 101 remains the ordinary sample. HydrationSandbox reuses production screens/controller/rules with dev_hydration.db and a separate saved virtual date; next-day/+7-day actions never change the phone clock or production plans. No production reminder scheduling from sandbox saves. AGENTS.md now requires testing access to stay aligned with implemented features. Offline :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:lintDebug passed: 39 unit tests, lint 0 errors/53 nonfatal warnings/1 boxing hint. Initial lint encountered an uncompiled newly added test source; stable-source retry passed without disabling checks. Corrected an instrumentation accessibility constant and added scrolling/page-transition/actionable-parent handling to the new hub tests; rebuilt test APK successfully. Direct instrumentation passed 6 checks across final runs: sandbox plan/attempt/extra/next-day/history with owner-total preservation, Dev shared switch and simultaneous sample/camera-reminder notifications opening camera, existing manual camera, existing populated History, blocked channel and denied notification recovery. Test-only named database/preferences and sample notifications cleaned up; original camera/notification denial and detection opt-in restored. adb install -r preserved owner data. HUB-01 through HUB-06 added; full manual/hardware/Doze/real-duration tests remain pending. No placeholders for unimplemented gesture/audio/medicine features. Changes uncommitted.
+
+Phase 6 step 1 verification: added camera/data/DetectionPreferences, camera/domain/CameraSessionLimit, private CameraSessionActivity and ui/camera/DetectionControl; updated ReminderNotifier and CameraSetup. Opt-in defaults off; notification taps recheck current state, including switches changed after posting. Camera sessions use elapsed-time budgets from initialization, a countdown, Stop and background/recreation release; manual Dev previews share the four-minute limit. Off routes to ordinary Home. Dev samples retain their ordinary Home intent. No new dependencies, permissions, video saving, analysis or hydration writes. Offline :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:lintDebug passed; 39 unit tests passed, lint 0 errors/52 nonfatal warnings/1 state-boxing hint. Rebuilt the test APK after adding the denial scenario. adb install -r preserved app data; direct instrumentation passed 7 tests across runs: four session/preference tests, existing live-camera and populated-History regressions, and notification-session permission denial/recreation. Used a posted reminder's actual content PendingIntent.send() from a foreground harness to verify routing and a real streaming preview; this is not a physical notification-panel/cold-start/locked-screen check. Virtual elapsed time stopped a real preview at the deadline; no real four-minute timing claim. Screenshot app/build/camera-preview-check.png visually verified preview/countdown/Stop. Camera and notification permissions restored to their original denied states with user-set/fixed flags cleared; opt-in restored to its prior value, test channel/notification cleaned up. No owner intake cleared/fabricated. SESSION-01 through SESSION-07 added; full manual/device performance, cold/locked notification taps and real-duration checks remain pending. Changes uncommitted. Next feature: local landmark tracking, without automatic intake recording.
+
+Dev notification verification: added dev/notification/DevNotification.kt and DevTools permission/status/settings controls. Sample uses water_reminders channel with separate tag/ID 101, replaces only the previous sample and opens Drink without recording water. Final offline :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug passed (0 errors, 51 nonfatal warnings). adb install -r preserved app data. Direct instrumentation passed three checks: real permission Allow followed by actual sample posting, expected channel/title, repeated taps retaining one sample, sample content-intent opening without intake change; blocked isolated channel returning failure; real Deny showing recovery without posting. Sample and temporary channel removed; original notification denial and camera denial verified, user-set/fixed notification flags cleared. No new dependencies/permissions or scheduler changes. DEV-NOTIFY-01 through DEV-NOTIFY-05 added; full manual statuses remain Not run. This does not establish timed/background/Doze delivery. Accumulated Dev changes remain uncommitted.
+
+Dev navigation verification: added ui/dev/DevTools.kt, moved the camera entry into Dev, shared the Drink/Dev header between Home/setup, and retained Home/setup saveable state while visiting tools. Camera Back returns to Dev; Dev Back returns Home/setup. Final offline :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug passed (0 errors, 51 nonfatal warnings). Installed APKs with adb install -r. Direct instrumentation verified the Dev/camera/Back path with permission denial and existing populated History navigation. The first navigation test used the shared Camera setup label before the destination transition completed; changed its wait to the distinct Dev-page text and the focused retry passed. History test passed on the initial run. No owner intake cleared or fabricated; camera permission remains denied with user-set/fixed flags cleared. DEV-01 through DEV-04 added to TEST_SCENARIOS.md; final manual statuses remain Not run. No gesture detection or broad page redesign added; changes uncommitted.
 
 Testing plan: `TEST_SCENARIOS.md` is the editable final functional checklist. Full functional execution is deferred until the final build; build/relevant automated checks continue during implementation. Revise scenarios with approved function changes. Do not mark final scenarios passed based only on earlier development checks.
 
@@ -61,6 +73,8 @@ Phase 5 development verification: optional camera-camera2/lifecycle/view 1.5.3, 
 
 ## Phase 6 — Drinking gesture prototype
 
+- [x] Add Home opt-in, reminder-tap routing and a four-minute visible session with lifecycle/permission tests (build/emulator verified; full phone checks pending).
+
 - [ ] Integrate local landmarks and short temporal movement analysis.
 - [ ] Implement baseline candidates, cooldown, and deduplication.
 - [ ] Allow confirmation/rejection and record performance measurements.
@@ -74,11 +88,29 @@ Acceptance: some deliberate drinking-like gestures produce candidates, false pos
 - [ ] Document precision, recall, false positives, and performance across lighting, angles, and occlusion.
 - [ ] Optimize inference and battery usage while maintaining target-device responsiveness.
 
-## Phase 8 — Polish and release preparation
+## Phase 8 — Custom reminder audio (planned)
+
+- [ ] Let users choose a ringtone or import a personal audio clip, such as a child's voice asking them to drink water.
+- [ ] Limit custom audio playback to no more than 45 seconds (owner confirmed); define duration selection and an early Stop action before implementation.
+- [ ] Keep selected audio on-device and preserve standard reminders when no custom clip is selected or it becomes unavailable.
+- [ ] Add preview/testing in Dev and verify stopping, repeated reminders, silent/DND behavior, background operation and battery use.
+- [ ] Choose the Android playback approach and document platform limits before implementation; verify the 45-second maximum under that approach.
+
+## Phase 9 — Medicine reminders / Tablets tab (planned; details pending)
+
+- [x] Owner confirmed Tablets means medicine reminders.
+- [ ] Plan separate Water and Tablets tabs and review the simple black/white layout before implementation.
+- [ ] Define tablet-specific entry fields, actions, reminder rules and history with the owner.
+- [ ] Keep Water plans/history intact and separate each feature's records and logic.
+- [ ] Add logic, persistence, notification and tab-navigation scenarios once behavior is agreed.
+
+## Phase 10 — Polish and release preparation
 
 - [ ] Improve accessibility and permission-denial handling.
 - [ ] Verify offline behavior, battery usage, and automated/manual checks.
 - [ ] Prepare release build and documentation.
+
+Roadmap update: former planned Phase 8 release preparation moves to Phase 10, following custom audio and medicine reminders in the Tablets tab. Phases 5 through 7 retain their scope. Owner confirmed a maximum audio duration of 45 seconds and that Tablets means medicine reminders. Medicine fields/schedules, audio duration selection and remaining UI details still need definition. These are planning additions only; no audio playback, medicine feature, dependencies or permissions implemented. No build/device checks run for this documentation-only update.
 
 ## Verification record
 

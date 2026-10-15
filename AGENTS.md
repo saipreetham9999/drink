@@ -40,5 +40,6 @@ Read this file, DESIGN.md, and TASKS.md before starting work. Inspect existing c
 - Document build configuration and material limitations.
 - Update TASKS.md with verified progress; distinguish planned, completed, and blocked work.
 - Update TEST_SCENARIOS.md whenever feature behavior changes. Keep final functional scenarios editable and distinguish planned scenarios from executed checks.
+- Keep Dev testing entries in sync with implemented features. Reuse production logic/screens, isolate test hydration data, and identify checks that still require physical-device or elapsed-time testing. Do not add placeholder tests for unimplemented features.
 - Report changes, affected files, commands executed, results, remaining issues, and the recommended next task.
 - Do not commit, publish, or deploy unless requested.
