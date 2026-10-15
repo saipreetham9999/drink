@@ -113,3 +113,15 @@ Reminder development checks: 35 unit tests and 28 direct emulator tests passed, 
 - HISTORY-06: Empty history has a clear message; storage failure shows retry without a false empty-success message. Final manual statuses remain Not run.
 
 History development verification: 35 unit tests passed; 5 focused database/controller/UI history tests and 23 regression emulator tests passed. Actual populated list/detail screenshots visually inspected from isolated fixture data in app/build/history-ui-check; verified 1,101/1,001 mL, 109 percent, original goals, unknown legacy goal, AM/PM entries and read-only UI/navigation. No owner records fabricated. This targeted run does not complete the full final manual HISTORY-01 through HISTORY-06 sequence.
+
+## Phase 5 camera setup - final manual statuses: Not run
+- CAM-01: Open Camera setup from Home or plan setup. Explanation and stopped status appear; no permission prompt or camera indicator until Start.
+- CAM-02: Start requests camera permission. Allow shows a live front-camera preview (rear fallback when no front camera), active status and Stop. No intake changes.
+- CAM-03: Deny once or permanently: helpful message and app-settings recovery; Back returns to manual tracking. Grant in settings returns stopped until Start.
+- CAM-04: Stop releases the camera and removes the preview. Repeat Start/Stop without stuck streams, crashes or accumulating observers.
+- CAM-05: Back, Android Back, Home/background, screen lock and recreation release the camera. Return requires Start; a late permission/provider callback must not reopen a cancelled session.
+- CAM-06: Missing camera, privacy toggle, another camera app or initialization failure gives a retryable unavailable state. Manual hydration/history/reminders remain usable.
+- CAM-07: Verify offline; no photos, video, audio, analyzed frames or hydration records are saved by preview. Manifest has no network, audio or media-storage permission.
+- CAM-08: On a physical target phone near 4 GB RAM measure startup latency, memory, UI responsiveness and battery/temperature during sustained preview; document device/results before landmark analysis.
+
+Camera development verification: final build, 35 unit tests and lint passed (0 errors, 51 nonfatal warnings). Direct instrumentation passed three camera checks across runs: real permission denial and allow dialogs, actual live STREAMING/IDLE transitions, repeated Start/Stop, background return and recreation. Another 28 existing hydration/history/reminder-preference tests passed. Preview overflow was found in screenshot inspection, fixed with clipping and reverified. Original camera-denied state restored and notification denial preserved. Merged manifest excludes network/audio/media storage; preview has no capture/analyzer or hydration writes. These targeted emulator checks do not complete CAM-01 through CAM-08 or establish physical-phone performance.

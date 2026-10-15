@@ -38,6 +38,8 @@ Reminder configuration is stored locally, separately from hydration records. Ded
 
 ### Optional drinking detection
 
+Phase 5 preview: a Camera setup link opens a separate monochrome screen without starting the camera. Start requests CAMERA permission only when needed and binds a CameraX Preview use case, preferring the front camera with rear fallback. Stop, Back, leaving the foreground and screen disposal unbind that use case; returning or recreation requires Start again. Camera hardware is optional, denial/unavailability leaves hydration usable, and app settings provide permission recovery. This phase has no capture, frame analyzer, microphone, storage, networking or hydration writes. CameraX camera2/lifecycle/view 1.5.3 are the only new direct dependencies. Physical-device memory, responsiveness and battery measurement remain required before detection.
+
 Start with an explicitly enabled camera session and visible start/stop controls. Analyze movement over time rather than relying on a single photograph. Hand-to-mouth movements may also be eating, scratching, or other actions; uncertainty must remain visible.
 
 Pipeline: CameraX frames → sampling/preprocessing → pose or hand landmarks → temporal analysis → gesture candidate → confidence and deduplication → user confirmation or approved auto-log policy → hydration history.

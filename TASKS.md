@@ -2,9 +2,9 @@ shall we start# Drink — Implementation Tasks
 
 ## Current scope
 
-Phase 4 is active: combined goal-first setup UI, AM/PM sleep fields, live amount and reminder preview, and daily/seven-day plans. Preserve extra intake and read-only history; lock the daily plan after any recorded drink. No separate settings screen.
+Phase 5 is active: optional camera permission, preview and explicit Start/Stop. Preserve the combined goal-first setup, daily/seven-day plans, reminders and read-only history. No gesture analysis or automatic recording in this phase.
 
-Current request: complete read-only history verification, populated UI checks, navigation and access after plan expiry. Keep the approved goal-first setup, daily/seven-day plan and local storage. Relevant automated checks run per feature; the final manual functional sequence remains deferred.
+Current request: implement CameraX preview with permission explanation and release on leaving/backgrounding. Verification in progress; final manual functional sequence remains deferred.
 
 Testing plan: `TEST_SCENARIOS.md` is the editable final functional checklist. Full functional execution is deferred until the final build; build/relevant automated checks continue during implementation. Revise scenarios with approved function changes. Do not mark final scenarios passed based only on earlier development checks.
 
@@ -54,8 +54,10 @@ Acceptance: tap a previous date to see its intake and daily completion; records 
 
 ## Phase 5 — Camera prototype
 
-- [ ] Add CameraX, permission explanation, preview, and explicit start/stop controls.
+- [x] Add CameraX, permission explanation, preview, and explicit start/stop controls (build/emulator verified).
 - [ ] Measure device performance and verify frames remain on-device.
+
+Phase 5 development verification: optional camera-camera2/lifecycle/view 1.5.3, CAMERA permission and optional hardware declarations added. CameraPreviewSession owns preview binding, error observation and cancellation of delayed initialization; CameraSetup owns permission/navigation/lifecycle UI. Preview prefers front camera with rear fallback. Stop, Back, pause and disposal release the use case; returning/recreation does not restart it. No capture/analyzer, hydration writes, microphone, storage or network access added. Corrected preview overflow after visually inspecting the emulator screenshot; final preview/text/Stop layout verified in app/build/camera-preview-check.png. Final gradlew.bat :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:lintDebug --offline --console=plain passed: 35 unit tests, lint 0 errors/51 nonfatal warnings (version notices, old unused resources and existing style suggestions). Initial online build downloaded uncached CameraX dependencies. App/test APKs installed with adb install -r; direct explicit-class instrumentation passed 31 tests across final runs: three camera tests (real permission allow/deny, actual STREAMING/IDLE preview transitions, repeated Start/Stop, background return and recreation) plus 28 hydration/history/reminder-preference regression tests. Camera permission restored to denied with user-set/fixed flags cleared; notifications remained denied. No owner intake cleared or fabricated. Merged manifest has no Internet/audio/media-storage permission; preview code does not save frames. Physical-device sustained memory/battery/latency, unavailable-camera/privacy-switch cases and full CAM-01 through CAM-08 manual execution remain pending. No detection/landmarks started. Changes not committed/pushed. Next task: physical-phone camera checks before Phase 6 landmarks.
 
 ## Phase 6 — Drinking gesture prototype
 

@@ -1,6 +1,7 @@
 package com.drink.app.ui
 
 import androidx.activity.compose.BackHandler
+import com.drink.app.ui.camera.CameraSetup
 import com.drink.app.ui.theme.DrinkTheme
 import com.drink.app.ui.setup.PlanSetup
 import com.drink.app.ui.setup.SleepSetup
@@ -25,6 +26,7 @@ fun DrinkApp(controller: HydrationController, reminders: ReminderController,
     onSaveReminders: (ReminderConfig) -> Unit, onConfigurePlan: (PlanRequest, ReminderConfig) -> Unit,
     onNotificationSettings: () -> Unit) {
     var editing by rememberSaveable(controller.home?.date) { mutableStateOf(false) }
+    var cameraOpen by rememberSaveable { mutableStateOf(false) }
     var submitted by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(controller.busy, reminders.busy, submitted) {
         if (submitted && !controller.busy && !reminders.busy) {
@@ -35,7 +37,9 @@ fun DrinkApp(controller: HydrationController, reminders: ReminderController,
     BackHandler(enabled = controller.historyOpen || editing) {
         if (editing) editing = false else controller.goBack()
     }
-    if (controller.historyOpen) {
+    if (cameraOpen) {
+        CameraSetup(onBack = { cameraOpen = false })
+    } else if (controller.historyOpen) {
         DrinkHistory(controller.history, controller.selectedDate, controller.detail, controller.busy, controller.error,
             onDate = controller::selectDate, onBack = controller::goBack, onRetry = controller::retry)
     } else DrinkTheme {
@@ -43,6 +47,7 @@ fun DrinkApp(controller: HydrationController, reminders: ReminderController,
             Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding().verticalScroll(rememberScrollState()).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 val home = controller.home
+                TextButton(onClick = { cameraOpen = true }) { Text("Camera setup") }
                 when {
                     !reminders.ready -> CircularProgressIndicator()
                     home == null -> {
